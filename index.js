@@ -2,6 +2,7 @@ const fs = require('fs');
 const codes = new Set();
 let file;
 let page_title;
+let parent_record;
 
 function setFileName(title) {
     // Reset file first if it already exists
@@ -26,21 +27,21 @@ function addPrefix(file) {
 
 function addTopXml(statuses = false) {
         let content = !statuses ?
-        `<?xml version="1.0" encoding="UTF-8"?>
-        <Questionnaire
-        xmlns="QuestionnaireSchema.xsd">
-        <Pages>
-        `
-        :  `<?xml version="1.0" encoding="UTF-8"?>
-        <Questionnaire
-        xmlns="QuestionnaireSchema.xsd">
-        <Statuses>
-        <Status code="0" action="document">Fit</Status>
-        <Status code="1" action="refer">Automatic referral</Status>
-        <Status code="3" action="wait">Review Required</Status>
-        </Statuses>
-        <Pages>
-        `;
+            `<?xml version="1.0" encoding="UTF-8"?>
+            <Questionnaire
+            xmlns="QuestionnaireSchema.xsd">
+            <Pages>
+            `
+            :  `<?xml version="1.0" encoding="UTF-8"?>
+            <Questionnaire
+            xmlns="QuestionnaireSchema.xsd">
+            <Statuses>
+            <Status code="0" action="document">Fit</Status>
+            <Status code="1" action="refer">Automatic referral</Status>
+            <Status code="3" action="wait">Review Required</Status>
+            </Statuses>
+            <Pages>
+            `;
         file.write(content + '\r\n', (error) => {
             if(error) {
             return console.log(error.message)
@@ -58,8 +59,8 @@ function addBottomXml() {
     });
  }
 
- function addInformation(style, text) {
-    let contents =  style 
+ function addInformation(text, style) {
+    let contents = style 
         ? `<Information style="${style}">${text}</Information>`
         : `<Information>${text}</Information>`;
     file.write(contents + '\r\n', error => {
@@ -88,7 +89,7 @@ function addBottomXml() {
         <!-- Page visibility -->
         <Visibility>
             <Any>
-                <Condition answer="Yes" record="--- RECORD HERE---" />
+                <Condition answer="Yes" record="${parent_record}" />
             </Any>
         </Visibility>
         </Page>`;
@@ -110,6 +111,9 @@ function addRadio(label, answers, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden
         ? `<Question record="${prefix}${code}" id="${code}" datatype="radio" required="${required}">
                 <Text record="${prefix}text-${code}">${label}</Text>
@@ -125,7 +129,7 @@ function addRadio(label, answers, hidden=false, required=true) {
             </Answers>
             <Visibility>
             <Any>
-                <Condition answer="Yes" record="--- RECORD HERE---" />
+                <Condition answer="Yes" record="${parent_record}" />
             </Any>
         </Visibility>
         </Question>`;
@@ -147,6 +151,9 @@ function addCheckbox(label, answers, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden
         ?
         `<Question record="${prefix}${code}" id="${code}" datatype="checkbox" required="${required}">
@@ -162,7 +169,7 @@ function addCheckbox(label, answers, hidden=false, required=true) {
             </Answers>
             <Visibility>
                 <Any>
-                    <Condition answer="Yes" record="--- RECORD HERE---" />
+                    <Condition answer="Yes" record="${parent_record}" />
                 </Any>
             </Visibility>
              </Question>`;
@@ -184,6 +191,9 @@ function addDropdownList(label, answers, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden
         ?
         `<Question record="${prefix}${code}" id="${code}" required="${required}">
@@ -199,7 +209,7 @@ function addDropdownList(label, answers, hidden=false, required=true) {
             </Answers>
             <Visibility>
                 <Any>
-                    <Condition answer="Yes" record="--- RECORD HERE---" />
+                    <Condition answer="Yes" record="${parent_record}" />
                 </Any>
             </Visibility>
              </Question>`;
@@ -220,13 +230,16 @@ function addLargeTextbox(label, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden
         ? `<Field record="${prefix}${code}" id="${code}" datatype="textarea" required="${required}">${label}</Field>`
 
         : `<Field record="${prefix}${code}" id="${code}" datatype="textarea" required="${required}">${label}
         <Visibility>
           <Any>
-            <Condition answer="Yes" record="--- RECORD HERE---" />
+            <Condition answer="Yes" record="${parent_record}" />
           </Any>
         </Visibility>
               </Field>`;
@@ -247,13 +260,16 @@ function addSmallTextbox(label, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden
         ? `<Field record="${prefix}${code}" id="${code}" required="${required}">${label}</Field>`
 
         : `<Field record="${prefix}${code}" id="${code}" required="${required}">${label}
             <Visibility>
               <Any>
-                <Condition answer="Yes" record="--- RECORD HERE---" />
+                <Condition answer="Yes" record="${parent_record}" />
               </Any>
             </Visibility>
           </Field>`;
@@ -274,12 +290,15 @@ function addDatePicker(label, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden 
         ? `<Field record="${prefix}${code}" id="${code}" datatype="date" required="${required}">${label}</Field>`
         : `<Field record="${prefix}${code}" id="${code}" datatype="date" required="${required}">${label}
             <Visibility>
              <Any>
-              <Condition answer="Yes" record="--- RECORD HERE---" />
+              <Condition answer="Yes" record="${parent_record}" />
              </Any>
            </Visibility>
         </Field>`;
@@ -300,6 +319,9 @@ function addTable(label, hidden=false, required=true) {
     // add unique code
     let code = generateCode();
     codes.add(code);
+    if (!hidden) {
+        parent_record = `${prefix}${code}`;
+    };
     let content = !hidden 
         ? `<Table record="${prefix}${code}" id="${code}" required="${required}">${label}
             <Text record="${prefix}text-${code}">${label}</Text>
@@ -314,7 +336,7 @@ function addTable(label, hidden=false, required=true) {
         <Column header="Dates" />
         <Visibility>
              <Any>
-              <Condition answer="Yes" record="--- RECORD HERE---" />
+              <Condition answer="Yes" record="${parent_record}" />
              </Any>
            </Visibility>
         </Table>`;
